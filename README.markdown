@@ -84,7 +84,7 @@ Then:
 
 # Other
 
-Inspired by famous DSLs of `Machinist` and `factory_girl`
+Inspired by `Machinist` and `factory_girl`
 
 *****
 
