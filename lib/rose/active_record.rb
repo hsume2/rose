@@ -3,12 +3,12 @@ require 'active_record'
 
 module Rose
   # This class is provides ActiveRecord models the ability to run reports
-  class ActiveRecordAdapter
+  class ActiveRecordAdapter < ObjectAdapter
     # @see Rose::ObjectAdapter#run
     def self.sprout(attributes, items=[], options={})
       table = nil
       options[:class].transaction do
-        table = Rose::ObjectAdapter.sprout(attributes, items, options)
+        table = super(attributes, items, options)
         raise ActiveRecord::Rollback
       end
       table

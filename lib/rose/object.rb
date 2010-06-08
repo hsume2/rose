@@ -7,13 +7,13 @@ module Rose
     # @param [Array<Rose::Attribute>] row_attributes the list of attributes that each cell in a row
     # @param [Array] items the items to report on
     # @param [Hash] options the options to run with
-    # @option opts [String] :group_column
-    # @option opts [String] :pivot_column
-    # @option opts [String] :value_block
-    # @option opts [String] :summary
-    # @option opts [String] :summary_on
-    # @option opts [String] :sort_by
-    # @option opts [String] :sort_order
+    # @option options [String] :group_column (nil) @deprecated
+    # @option options [String] :pivot_column (nil) @deprecated
+    # @option options [String] :value_block (nil) @deprecated
+    # @option options [String] :summary (nil) @deprecated
+    # @option options [String] :summary_on (nil) @deprecated
+    # @option options [String] :sort_by (nil) @deprecated
+    # @option options [String] :sort_order (nil) @deprecated
     # @return [Ruport::Data::Table] the resulting table
     def self.sprout(row_attributes, items=[], options={})
       table = Ruport::Data::RoseTable.new(:column_names => row_attributes.column_names)
