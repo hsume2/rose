@@ -67,7 +67,7 @@ Then:
       end
     end
     
-    Employee.rose_for(:department_salaries).sprout(:conditions => ["salary <> ?", nil])
+    Employee.rose_for(:department_salaries, :conditions => ["salary <> ?", nil])
     
     +----------------------+
     | Department  | Salary |
