@@ -91,7 +91,7 @@ Inspired by `Machinist` and `factory_girl`
 # Future
 
 * Two-way reporting
-* Filtering
+* Filtering documentation
 * Documentation
 
 *****

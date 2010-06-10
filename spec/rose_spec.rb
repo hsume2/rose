@@ -28,7 +28,9 @@ describe Rose do
     end
   end
 
-  it "should not contain code smells" do
-    Dir['lib/**/*.rb'].should_not reek
+  if $reek
+    it "should not contain code smells" do
+      Dir['lib/**/*.rb'].should_not reek
+    end
   end
 end

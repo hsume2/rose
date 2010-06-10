@@ -34,9 +34,14 @@ module Rose
 
     # @param [String, Symbol] column_name the column to sort by
     # @param [:ascending, :descending] order the order to sort by
-    def sort(column_name, order = :ascending)
-      @options[:sort] = Attribute::Sort.new(column_name, order)
+    def sort(column_name, order = :ascending, &sort_block)
+      @options[:sort] = Attribute::Sort.new(column_name, order, &sort_block)
       @alterations << @options[:sort]
+    end
+
+    def filter(&filter_block)
+      @options[:filter] = Attribute::Filter.new(nil, nil, filter_block)
+      @alterations << @options[:filter]
     end
 
     # @param [String, Symbol] column_name the column to group by

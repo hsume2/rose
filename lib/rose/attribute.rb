@@ -62,15 +62,29 @@ module Rose
 
     # This is a value object for sort parameters
     class Sort
-      attr_reader :column_name, :order
+      attr_reader :column_name, :order, :sort_block
 
-      def initialize(column_name, order)
+      def initialize(column_name, order, &sort_block)
         @column_name = column_name
         @order       = order
+        @sort_block  = sort_block
       end
 
       def on(table)
-        table.sort_rows_by!(@column_name, :order => @order)
+        if @sort_block
+          table.sort_rows_by!(nil, :order => @order) do |row|
+            @sort_block.call(row[@column_name])
+          end
+        else
+          table.sort_rows_by!(@column_name, :order => @order)
+        end
+        table
+      end
+    end
+    
+    class Filter < Indirect
+      def on(table)
+        table.data.reject! { |record| !@value_block.call(record) }
         table
       end
     end

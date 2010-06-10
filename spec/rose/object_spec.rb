@@ -111,6 +111,25 @@ describe Rose, "Object adapter" do
       end
       sort("Age", :descending)
     }
+    
+    @negative_sort_block = negative_sort_block = lambda { |v| v.to_i * -1 }
+    @positive_sort_block = positive_sort_block = lambda { |v| v.to_i }
+    
+    Rose.make(:with_sort_by_block_negative, :class => Flower) {
+      rows do
+        column(:type => "Type")
+        column(:age => "Age")
+      end
+      sort("Age", :descending, &negative_sort_block)
+    }
+    
+    Rose.make(:with_sort_by_block_positive, :class => Flower) {
+      rows do
+        column(:type => "Type")
+        column(:age => "Age")
+      end
+      sort("Age", :descending, &positive_sort_block)
+    }
 
     Rose.make(:with_ordered_execution_asc, :class => Flower) {
       rows do
@@ -132,6 +151,17 @@ describe Rose, "Object adapter" do
       summary("Type") do
         column("Color") { |colors| colors.join(", ") }
       end
+    }
+    
+    @filter_block = filter_block = lambda { |row| row["Color"] != "blue" }
+    
+    Rose.make(:with_filter, :class => Flower) {
+      rows do
+        column(:type => "Type")
+        column(:color => "Color")
+        column(:age => "Age")
+      end
+      filter(&filter_block)
     }
   end
 
@@ -166,6 +196,14 @@ describe Rose, "Object adapter" do
         report.options[:class].should == RoseyObject
       end
     end
+    
+    it "should support sort by block" do
+      Rose(:with_sort_by_block_negative).tap do |report|
+        report.options[:sort].column_name.should == "Age"
+        report.options[:sort].order.should == :descending
+        report.options[:sort].sort_block.should == @negative_sort_block
+      end
+    end
 
     it "should support summary" do
       Rose(:with_summary).tap do |report|
@@ -179,6 +217,12 @@ describe Rose, "Object adapter" do
         report.options[:pivot].group_column.should == "Color"
         report.options[:pivot].pivot_column.should == "Type"
         report.options[:pivot].value_block.should == @value_block
+      end
+    end
+
+    it "should support filtering" do
+      Rose(:with_filter).tap do |report|
+        report.options[:filter].value_block.should == @filter_block
       end
     end
   end
@@ -276,6 +320,30 @@ describe Rose, "Object adapter" do
       +-----------------------+
       eo_table
     end
+    
+    it "should sort by block (-)" do
+      Rose(:with_sort_by_block_negative).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
+      +---------------+
+      |  Type   | Age |
+      +---------------+
+      | roses   | 1   |
+      | violets | 2   |
+      | roses   | 3   |
+      +---------------+
+      eo_table
+    end
+    
+    it "should sort by block (+)" do
+      Rose(:with_sort_by_block_positive).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
+      +---------------+
+      |  Type   | Age |
+      +---------------+
+      | roses   | 3   |
+      | violets | 2   |
+      | roses   | 1   |
+      +---------------+
+      eo_table
+    end
 
     it "should summarize columns" do
       Rose(:with_summary).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
@@ -339,6 +407,17 @@ describe Rose, "Object adapter" do
       | roses   | red, red, maroon |
       | violets | blue             |
       +----------------------------+
+      eo_table
+    end
+
+    it "should filter rows" do
+      Rose(:with_filter).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
+      +---------------------+
+      | Type  | Color | Age |
+      +---------------------+
+      | roses | red   | 1   |
+      | roses | red   | 3   |
+      +---------------------+
       eo_table
     end
   end
