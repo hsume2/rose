@@ -15,10 +15,11 @@ module Rose
     # @option options [String] :sort_by (nil) @deprecated
     # @option options [String] :sort_order (nil) @deprecated
     # @return [Ruport::Data::Table] the resulting table
-    def self.sprout(row_attributes, items=[], options={})
-      table = Ruport::Data::RoseTable.new(:column_names => row_attributes.column_names)
+    def self.sprout(row, items=[], options={})
+      attributes = row.attributes
+      table = Ruport::Data::RoseTable.new(:column_names => attributes.column_names)
 
-      rows(table, items, row_attributes, options)
+      self.rows(table, items, attributes, options)
 
       if (alterations = options[:alterations])
         alterations.each do |alteration|
@@ -27,6 +28,10 @@ module Rose
       end
 
       table
+    end
+
+    def self.osmosis(root, updates={}, options={})
+      root.updater.call(updates)
     end
 
     def self.rows(table, items, attributes, options={})
@@ -40,18 +45,4 @@ module Rose
       raise TypeError.new("Expected #{klass}, got #{item.class}") unless item.kind_of?(klass)
     end
   end
-
-  # module ObjectExtensions
-  #   def self.included(base)
-  #     base.extend(ClassMethods)
-  #   end
-  #
-  #   module ClassMethods
-  #
-  #   end
-  # end
 end
-
-# class Object
-#   include Rose::ObjectExtensions
-# end

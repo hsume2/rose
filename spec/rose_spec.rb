@@ -9,12 +9,12 @@ describe Rose do
 
     it "should make new report with object adapter" do
       Rose::Seedling.expects(:new).with(Rose::ObjectAdapter, {}).returns(instance = mock('Instance'))
-      Rose.make(:test, &@blk).should == instance
+      Rose.make(:test, &@blk).seedling.should == instance
     end
 
     it "should make new report with options" do
       Rose::Seedling.expects(:new).with(Rose::ObjectAdapter, {:class => Fixnum}).returns(instance = mock('Instance'))
-      Rose.make(:test, :class => Fixnum, &@blk).should == instance
+      Rose.make(:test, :class => Fixnum, &@blk).seedling.should == instance
     end
 
     it "should make new report with block" do

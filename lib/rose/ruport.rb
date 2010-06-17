@@ -24,7 +24,7 @@ end
 # Enables using value blocks for the value column
 class Ruport::Data::Table::RosePivot < Ruport::Data::Table::Pivot
   def to_table
-    result = Table()
+    result = Ruport::Data::RoseTable.new()
     result.add_column(@group_column)
     pivoted_columns = columns_from_pivot
     pivoted_columns.each { |name| result.add_column(name) }

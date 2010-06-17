@@ -2,6 +2,7 @@ require 'ruport'
 
 module Rose
   autoload :Seedling, 'rose/seedling'
+  autoload :Shell, 'rose/shell'
   autoload :ObjectAdapter, 'rose/object'
   autoload :ActiveRecordAdapter, 'rose/active_record'
 
@@ -20,7 +21,7 @@ module Rose
   def self.make(name, options={}, &blk)
     instance = Rose::Seedling.new(Rose::ObjectAdapter, options)
     instance.instance_eval(&blk)
-    self.seedlings[name] = instance
+    self.seedlings[name] = Shell.new(instance)
   end
 end
 

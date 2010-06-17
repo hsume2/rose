@@ -4,14 +4,22 @@ require 'active_record'
 module Rose
   # This class is provides ActiveRecord models the ability to run reports
   class ActiveRecordAdapter < ObjectAdapter
-    # @see Rose::ObjectAdapter#run
-    def self.sprout(attributes, items=[], options={})
+    # @see Rose::ObjectAdapter#sprout
+    def self.sprout(row, items=[], options={})
       table = nil
       options[:class].transaction do
-        table = super(attributes, items, options)
+        table = super(row, items, options)
         raise ActiveRecord::Rollback
       end
       table
+    end
+
+    # @see Rose::ObjectAdapter#osmosis
+    def self.osmosis(root, updates={}, options={})
+      updates.each do |idy, update|
+        record = root.finder.call(idy)
+        root.updater.call(record, update)
+      end
     end
   end
 
@@ -40,7 +48,7 @@ module Rose
 
       def register_seedling(name, instance)
         @seedlings ||= {}
-        @seedlings[name] = instance
+        @seedlings[name] = Shell.new(instance)
       end
     end
   end

@@ -1,5 +1,5 @@
 module Rose
-  # This should probably be called Cell
+  # An Attribute is value object used to operate on a table
   class Attribute
     attr_reader :method_name
     attr_reader :column_name
@@ -13,7 +13,7 @@ module Rose
       @column_name || @method_name
     end
 
-    # This class defines a Cell whose value is defined via a block
+    # This class defines an Attribute whose value is defined via a block
     class Indirect < Attribute
       attr_reader :value_block
 
@@ -27,7 +27,7 @@ module Rose
       end
     end
 
-    # This class defines a Cell whose value is defined via a method
+    # This class defines an Attribute whose value is defined via a method
     class Direct < Attribute
       def evaluate(item)
         if item.respond_to?(@method_name.to_sym)
@@ -81,7 +81,8 @@ module Rose
         table
       end
     end
-    
+
+    # This class defines an Indirect Attribute for rejecting table rows
     class Filter < Indirect
       def on(table)
         table.data.reject! { |record| !@value_block.call(record) }

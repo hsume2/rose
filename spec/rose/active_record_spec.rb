@@ -235,6 +235,45 @@ module RoseActiveRecordSpecs
         }.should_not change(all_sizes, :call)
       end
     end
+
+    describe "import report" do
+      before do
+        Post.rose(:for_update) {
+          rows do
+            identity("Post", &:title)
+            column("Comments") { |item| item.comments.size }
+          end
+
+          sort("Comments", :descending)
+
+          roots do
+            find do |idy|
+              Post.find_by_title!(idy)
+            end
+            update do |record, attributes|
+              attributes = attributes.delete_if { |attr, value| !["title"].include?(attr) }
+              record.update_attributes(attributes)
+            end
+          end
+        }
+
+        @post_3 = Post.create(:title => "Post #3")
+        @post_4 = Post.create(:title => "Post #4")
+      end
+
+      after do
+        @post_3.destroy; @post_4.destroy
+      end
+
+      it "should update report" do
+        Post.seedlings(:for_update).photosynthesize({
+          "Post #3" => { "title" => "Third Post", "something" => "else" },
+          "Post #4" => { "title" => "Fourth Post" }
+        })
+
+        Post.all.map(&:title).should == ["Post #1", "Post #2", "Third Post", "Fourth Post"]
+      end
+    end
   end
 
 end

@@ -6,6 +6,9 @@ module Rose
     # @return [RowProxy] the row proxy containing an array of Attributes
     attr_reader :row
 
+    # @return [RootProxy] the root proxy containing attribute finder and updater
+    attr_reader :root
+
     # @return [ObjectAdapter] the adapter
     attr_reader :adapter
 
@@ -25,9 +28,9 @@ module Rose
       @alterations = @options[:alterations] = []
     end
 
-    # @yield RowProxy
+    # @yield Proxy::Row
     def rows(&blk)
-      proxy = RowProxy.new
+      proxy = Proxy::Row.new
       proxy.instance_eval(&blk)
       @row = proxy
     end
@@ -39,15 +42,16 @@ module Rose
       @alterations << @options[:sort]
     end
 
+    # @yield Attribute::Filter
     def filter(&filter_block)
       @options[:filter] = Attribute::Filter.new(nil, nil, filter_block)
       @alterations << @options[:filter]
     end
 
     # @param [String, Symbol] column_name the column to group by
-    # @yield SummaryProxy
+    # @yield Proxy::Summary
     def summary(column_name, &blk)
-      proxy = SummaryProxy.new(column_name)
+      proxy = Proxy::Summary.new(column_name)
       proxy.instance_eval(&blk)
       @options[:summary] = proxy
       @alterations << @options[:summary]
@@ -61,10 +65,11 @@ module Rose
       @alterations << @options[:pivot]
     end
 
-    # @param [Array] items the items to sprout the seedling with (run the report with)
-    # @return [Ruport::Data::RoseTable] the resulting table
-    def bloom(items=[])
-      @adapter.sprout(@row.attributes, items, @options)
+    # @yield Proxy::Root
+    def roots(&blk)
+      proxy = Proxy::Root.new
+      proxy.instance_eval(&blk)
+      @root = proxy
     end
   end
 end

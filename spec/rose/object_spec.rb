@@ -111,10 +111,10 @@ describe Rose, "Object adapter" do
       end
       sort("Age", :descending)
     }
-    
+
     @negative_sort_block = negative_sort_block = lambda { |v| v.to_i * -1 }
     @positive_sort_block = positive_sort_block = lambda { |v| v.to_i }
-    
+
     Rose.make(:with_sort_by_block_negative, :class => Flower) {
       rows do
         column(:type => "Type")
@@ -122,7 +122,7 @@ describe Rose, "Object adapter" do
       end
       sort("Age", :descending, &negative_sort_block)
     }
-    
+
     Rose.make(:with_sort_by_block_positive, :class => Flower) {
       rows do
         column(:type => "Type")
@@ -152,9 +152,9 @@ describe Rose, "Object adapter" do
         column("Color") { |colors| colors.join(", ") }
       end
     }
-    
+
     @filter_block = filter_block = lambda { |row| row["Color"] != "blue" }
-    
+
     Rose.make(:with_filter, :class => Flower) {
       rows do
         column(:type => "Type")
@@ -163,6 +163,22 @@ describe Rose, "Object adapter" do
       end
       filter(&filter_block)
     }
+
+    @updates_recorder = updates_recorder = []
+    @find_block = find_block = lambda { |updates| 1 }
+    @update_block = update_block = lambda { |updates| updates_recorder << updates }
+
+    Rose.make(:with_update) do
+      rows do
+        identity(:type => "Type")
+        column(:color => "Color")
+        column(:age => "Age")
+      end
+      roots do
+        find(&find_block)
+        update(&update_block)
+      end
+    end
   end
 
   after do
@@ -170,6 +186,14 @@ describe Rose, "Object adapter" do
   end
 
   context "make report" do
+    it "should support bloom and photosynthesize" do
+      Rose(:with_direct_attrs).tap do |rose|
+        rose.should be_kind_of(Rose::Shell)
+        rose.should respond_to(:bloom)
+        rose.should respond_to(:photosynthesize)
+      end
+    end
+
     it "should support direct attributes" do
       Rose(:with_direct_attrs).tap do |report|
         report.row.attributes.map(&:column_name).should == [:petals, :thorns]
@@ -196,7 +220,7 @@ describe Rose, "Object adapter" do
         report.options[:class].should == RoseyObject
       end
     end
-    
+
     it "should support sort by block" do
       Rose(:with_sort_by_block_negative).tap do |report|
         report.options[:sort].column_name.should == "Age"
@@ -223,6 +247,13 @@ describe Rose, "Object adapter" do
     it "should support filtering" do
       Rose(:with_filter).tap do |report|
         report.options[:filter].value_block.should == @filter_block
+      end
+    end
+
+    it "should support update" do
+      Rose(:with_update).tap do |report|
+        report.root.finder.should == @find_block
+        report.root.updater.should == @update_block
       end
     end
   end
@@ -320,7 +351,7 @@ describe Rose, "Object adapter" do
       +-----------------------+
       eo_table
     end
-    
+
     it "should sort by block (-)" do
       Rose(:with_sort_by_block_negative).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
       +---------------+
@@ -332,7 +363,7 @@ describe Rose, "Object adapter" do
       +---------------+
       eo_table
     end
-    
+
     it "should sort by block (+)" do
       Rose(:with_sort_by_block_positive).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
       +---------------+
@@ -419,6 +450,14 @@ describe Rose, "Object adapter" do
       | roses | red   | 3   |
       +---------------------+
       eo_table
+    end
+
+    it "should update" do
+      Rose(:with_update).photosynthesize({
+        "roses" => { "color" => "blue" }
+      })
+
+      @updates_recorder.should == [{"roses"=>{"color"=>"blue"}}]
     end
   end
 end
