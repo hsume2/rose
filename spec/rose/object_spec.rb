@@ -164,26 +164,10 @@ describe Rose, "Object adapter" do
       filter(&filter_block)
     }
 
-    # @updates_recorder = updates_recorder = []
     @find_block = find_block = lambda { |items, idy|
       items.find { |item| item.id.to_s == idy }
     }
     @update_block = update_block = lambda { |item, updates| item.color = updates["Color"] }
-    #
-    # Rose.make(:with_update) do
-    #   rows do
-    #     identity(:id => "ID")
-    #     column(:type => "Type")
-    #     column(:color => "Color")
-    #     column(:age => "Age")
-    #   end
-    #   roots do
-    #     find(&find_block)
-    #     update do |item, ups|
-    #       item.color = ups["Color"]
-    #     end
-    #   end
-    # end
 
     Rose.make(:with_find_and_update) do
       rows do
