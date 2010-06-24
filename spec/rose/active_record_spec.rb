@@ -238,7 +238,7 @@ module RoseActiveRecordSpecs
 
     describe "import report" do
       before do
-        Post.rose(:for_update) {
+        Post.rose(:with_update) {
           rows do
             identity(:guid => "ID")
             column("Title", &:title)
@@ -248,8 +248,8 @@ module RoseActiveRecordSpecs
           sort("Comments", :descending)
 
           roots do
-            find do |idy|
-              Post.find_by_guid!(idy)
+            find do |items, idy|
+              items.find { |item| item.guid == idy }
             end
             update do |record, updates|
               record.update_attribute(:title, updates["Title"])
@@ -266,18 +266,100 @@ module RoseActiveRecordSpecs
       end
 
       it "should update report" do
-        Post.seedlings(:for_update).photosynthesize({
-          "P3" => { "Title" => "Third Post", "something" => "else" },
-          "P4" => { "Title" => "Fourth Post" }
-        })
+        Post.root_for(:with_update, {
+          :with => {
+            "P3" => { "Title" => "Third Post", "something" => "else" },
+            "P4" => { "Title" => "Fourth Post" }
+          }
+        }).should match_table <<-eo_table.gsub(%r{^        }, '')
+        +-----------------------------+
+        | ID |    Title    | Comments |
+        +-----------------------------+
+        | P1 | Post #1     | 2        |
+        | P2 | Post #2     | 1        |
+        | P4 | Fourth Post | 0        |
+        | P3 | Third Post  | 0        |
+        +-----------------------------+
+        eo_table
 
         Post.all.map(&:title).should == ["Post #1", "Post #2", "Third Post", "Fourth Post"]
       end
 
+      it "should update report with conditions" do
+        Post.root_for(:with_update, {
+          :with => {
+            "P3" => { "Title" => "Third Post", "something" => "else" },
+            "P4" => { "Title" => "Fourth Post" }
+          }
+        }, { :conditions => ["title like ?", "%#3%"] }).should match_table <<-eo_table.gsub(%r{^        }, '')
+        +----------------------------+
+        | ID |   Title    | Comments |
+        +----------------------------+
+        | P3 | Third Post | 0        |
+        +----------------------------+
+        eo_table
+
+        Post.all.map(&:title).should == ["Post #1", "Post #2", "Third Post", "Post #4"]
+      end
+
       it "should update report from CSV" do
-        Post.seedlings(:for_update).photosynthesize("spec/examples/update_posts.csv")
+        Post.root_for(:with_update, {
+          :with => "spec/examples/update_posts.csv"
+        }).should match_table <<-eo_table.gsub(%r{^        }, '')
+        +-----------------------------+
+        | ID |    Title    | Comments |
+        +-----------------------------+
+        | P1 | Post #1     | 2        |
+        | P2 | Post #2     | 1        |
+        | P4 | Fourth Post | 0        |
+        | P3 | Third Post  | 0        |
+        +-----------------------------+
+        eo_table
 
         Post.all.map(&:title).should == ["Post #1", "Post #2", "Third Post", "Fourth Post"]
+      end
+    end
+    
+    describe "preview import report" do
+      before do
+        Post.rose(:for_import) {
+          rows do
+            identity(:guid => "ID")
+            column("Title", &:title)
+            column("Comments") { |item| item.comments.size }
+          end
+    
+          sort("Comments", :descending)
+    
+          roots do
+            find do |items, idy|
+              items.find { |item| item.guid == idy }
+            end
+            preview_update do |record, updates|
+              record.title = updates["Title"]
+            end
+            update { raise Exception, "not me!" }
+          end
+        }
+      end
+    
+      it "should preview changes" do
+        Post.root_for(:for_import, {
+          :with => {
+            "P1" => { "Title" => "First Post", "something" => "else" },
+            "P2" => { "Title" => "Second Post" }
+          },
+          :preview => true
+        }).should match_table <<-eo_table.gsub(%r{^        }, '')
+        +-----------------------------+
+        | ID |    Title    | Comments |
+        +-----------------------------+
+        | P1 | First Post  | 2        |
+        | P2 | Second Post | 1        |
+        +-----------------------------+
+        eo_table
+    
+        Post.all.map(&:title).should == ["Post #1", "Post #2"]
       end
     end
   end

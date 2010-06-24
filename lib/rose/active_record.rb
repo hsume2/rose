@@ -13,12 +13,6 @@ module Rose
       end
       table
     end
-
-    protected
-
-    def self.use_finder(finder, items, idy)
-      finder.call(idy)
-    end
   end
 
   module ActiveRecordExtensions
@@ -27,6 +21,8 @@ module Rose
     end
 
     module ClassMethods
+      include Rose::CoreExtensions
+
       def rose(name, options={}, &blk)
         instance = Rose::Seedling.new(Rose::ActiveRecordAdapter, options.merge(:class => self))
         instance.instance_eval(&blk)
@@ -35,6 +31,10 @@ module Rose
 
       def rose_for(name, *args)
         seedlings(name).bloom(self.find(:all, *args))
+      end
+
+      def root_for(name, options={}, *args)
+        seedlings(name).photosynthesize(self.find(:all, *args), options)
       end
 
       def seedlings(name)

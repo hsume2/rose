@@ -126,14 +126,32 @@ Install the gem:
 
 ### Manually
 
-    Rose(:with_find_and_update).photosynthesize({
-      "0" => { "Color" => "blue" }
-      # ID => Updates
-    }, @flowers)
+    Rose(:with_find_and_update).photosynthesize(@flowers, {
+      :updates => {
+        "0" => { "Color" => "blue" }
+        # ID => Updates
+      }
+    })
 
 ### CSV
 
-    Rose(:with_find_and_update).photosynthesize("change_flowers.csv", @flowers)
+    Rose(:with_find_and_update).photosynthesize(@flowers, {
+      :csv_file => "change_flowers.csv"
+    })
+
+### Preview
+
+    Rose(:with_find_and_update).photosynthesize(@flowers, {
+      :updates => {
+        "0" => { "Color" => "blue" }
+      }, 
+      :preview => true
+    })
+    
+    Rose(:with_find_and_update).photosynthesize(@flowers, {
+      :csv_file => "change_flowers.csv",
+      :preview  => true
+    })
 
 # ActiveRecord
 
@@ -173,7 +191,7 @@ For the most part, the ActiveRecord adapter has the same interface as the Object
 
 `Employee#rose_for` is a helper method that blooms on Employee.find(:all, :conditions => ["salary <> ?", nil]). If you still want direct access to your report, you can use `Employee.seedlings(:department_salaries)`
 
-## Importing
+## Importing (with Preview)
 
     Post.rose(:for_update) {
       rows do
@@ -185,14 +203,26 @@ For the most part, the ActiveRecord adapter has the same interface as the Object
       sort("Comments", :descending)
 
       roots do
-        find do |idy| # <= no items
-          Post.find_by_guid!(idy)
+        find do |items, idy|
+          items.find { |item| item.guid == idy }
         end
         update do |record, updates|
           record.update_attribute(:title, updates["Title"])
         end
       end
     }
+    
+    Post.root_for(:for_update, {
+      :updates => {
+        "1" => { "Title" => "New Title" }
+      },
+      :preview => true
+    }) # => Returns a table
+    
+    Post.root_for(:for_update, {
+      :csv_file => "change_flowers.csv"
+      :preview  => true
+    })
 
 *****
 

@@ -76,6 +76,7 @@ module Rose
     class Root
       attr_reader :finder
       attr_reader :updater
+      attr_reader :update_previewer
 
       def find(&blk)
         @finder = blk
@@ -83,6 +84,15 @@ module Rose
 
       def update(&blk)
         @updater = blk
+      end
+
+      def preview_update(&blk)
+        @update_previewer = blk
+      end
+
+      # @param [true, false] preview whether to use the update_previewer or not
+      def updater(preview = false)
+        preview ? @update_previewer : @updater
       end
     end
   end

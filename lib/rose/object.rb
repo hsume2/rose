@@ -38,27 +38,32 @@ module Rose
     # @param [Rose::Seedling] seedling the seedling to update
     # @param [Hash] options the options to run with
     # @option options [Array] :items (required) an Array of items
-    # @option options [Hash] :updates (required) a Hash of identity (id), attribute pairs
+    # @option options [Hash,String] :with (required) (see Rose::Shell#photosynthesize)
     def self.osmosis(seedling, options={})
-      updates_or_csv, items = required_values(options, :updates, :items)
+      hash_or_csv, items = required_values(options, :with, :items)
 
-      root = seedling.root
-      idy_attr = seedling.row.identity_attribute
+      root, row = seedling.root, seedling.row
+      idy_attr = row.identity_attribute
 
-      case updates_or_csv
+      case hash_or_csv
       when String # CSV File
-        self.osmosis_from_csv(root, {
+        self.osmosis_from_csv(root, options.merge(
           :idy_attr => idy_attr,
-          :csv_file => updates_or_csv,
+          :csv_file => hash_or_csv,
           :items    => items
-        })
+        ))
       when Hash
-        self.osmosis_from_hash(root, {
+        self.osmosis_from_hash(root, options.merge(
           :idy_attr => idy_attr,
-          :updates  => updates_or_csv,
+          :updates  => hash_or_csv,
           :items    => items
-        })
+        ))
       end
+
+      self.sprout(seedling, options.merge(
+        :attributes => row.attributes,
+        :items      => items
+      ))
     end
 
     protected
@@ -75,6 +80,7 @@ module Rose
       raise TypeError.new("Expected #{klass}, got #{item.class}") unless item.kind_of?(klass)
     end
 
+    # @return [Array] items (see Rose::ObjectAdapter#osmosis_from_hash)
     def self.osmosis_from_csv(root, options={})
       idy_attr, csv_file, items = required_values(options, :idy_attr, :csv_file, :items)
       updates = data_from_csv(csv_file).inject({}) do |updates, data|
@@ -84,13 +90,15 @@ module Rose
       self.osmosis_from_hash(root, options.merge(:updates => updates))
     end
 
+    # @return [Array] items the updated items
     def self.osmosis_from_hash(root, options={})
       idy_attr, updates, items = required_values(options, :idy_attr, :updates, :items)
       finder = root.finder || auto_finder(idy_attr)
       updates.each do |idy, update|
-        record = use_finder(finder, items, idy)
-        root.updater.call(record, update)
+        record = use_finder(finder, items, idy) || next
+        root.updater(options[:preview]).call(record, update)
       end
+      items
     end
 
     def self.data_from_csv(csv_file)
@@ -107,6 +115,7 @@ module Rose
       }
     end
 
+    # In case subclasses want to call finders differently
     def self.use_finder(finder, items, idy)
       finder.call(items, idy)
     end

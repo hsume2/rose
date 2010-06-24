@@ -193,6 +193,21 @@ describe Rose, "Object adapter" do
         update(&update_block)
       end
     end
+
+    @preview_update_block = preview_update_block = lambda { |item, updates| item.preview(true); item.color = updates["Color"] }
+
+    Rose.make(:with_preview) do
+      rows do
+        identity(:id => "ID")
+        column(:type => "Type")
+        column(:color => "Color")
+        column(:age => "Age")
+      end
+      roots do
+        preview_update(&preview_update_block)
+        update { raise Exception, "you shouldn't be calling me" }
+      end
+    end
   end
 
   after do
@@ -274,6 +289,12 @@ describe Rose, "Object adapter" do
       Rose(:with_find_and_update).tap do |report|
         report.root.finder.should == @find_block
         report.root.updater.should == @update_block
+      end
+    end
+
+    it "should support preview" do
+      Rose(:with_preview).tap do |report|
+        report.root.update_previewer.should == @preview_update_block
       end
     end
   end
@@ -473,11 +494,11 @@ describe Rose, "Object adapter" do
     end
 
     it "should find and update" do
-      Rose(:with_find_and_update).photosynthesize({
-        "0" => { "Color" => "blue" }
-      }, @flowers)
-
-      Rose(:with_find_and_update).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
+      Rose(:with_find_and_update).photosynthesize(@flowers, {
+        :with => {
+          "0" => { "Color" => "blue" }
+        }
+      }).should match_table <<-eo_table.gsub(%r{^      }, '')
       +----------------------------+
       | ID |  Type   | Color | Age |
       +----------------------------+
@@ -489,11 +510,11 @@ describe Rose, "Object adapter" do
     end
 
     it "should update" do
-      Rose(:with_update).photosynthesize({
-        "0" => { "Color" => "blue" }
-      }, @flowers)
-
-      Rose(:with_update).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
+      Rose(:with_update).photosynthesize(@flowers, {
+        :with => {
+          "0" => { "Color" => "blue" }
+        }
+      }).should match_table <<-eo_table.gsub(%r{^      }, '')
       +----------------------------+
       | ID |  Type   | Color | Age |
       +----------------------------+
@@ -505,9 +526,51 @@ describe Rose, "Object adapter" do
     end
 
     it "should update from CSV" do
-      Rose(:with_update).photosynthesize("spec/examples/update_flowers.csv", @flowers)
+      Rose(:with_update).photosynthesize(@flowers, {
+        :with => "spec/examples/update_flowers.csv"
+      }).should match_table <<-eo_table.gsub(%r{^      }, '')
+      +----------------------------+
+      | ID |  Type   | Color | Age |
+      +----------------------------+
+      | 0  | roses   | blue  | 1   |
+      | 1  | violets | red   | 2   |
+      | 2  | roses   | green | 3   |
+      +----------------------------+
+      eo_table
+    end
 
-      Rose(:with_update).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
+    it "should preview" do
+      @flowers.each do |flower|
+        flower.expects(:preview).with(true)
+      end
+
+      Rose(:with_preview).photosynthesize(@flowers, {
+        :with => {
+          "0" => { "Color" => "blue" },
+          "1" => { "Color" => "blue" },
+          "2" => { "Color" => "blue" }
+        },
+        :preview => true
+      }).should match_table <<-eo_table.gsub(%r{^      }, '')
+      +----------------------------+
+      | ID |  Type   | Color | Age |
+      +----------------------------+
+      | 0  | roses   | blue  | 1   |
+      | 1  | violets | blue  | 2   |
+      | 2  | roses   | blue  | 3   |
+      +----------------------------+
+      eo_table
+    end
+
+    it "should preview from CSV" do
+      @flowers.each do |flower|
+        flower.expects(:preview).with(true)
+      end
+
+      Rose(:with_preview).photosynthesize(@flowers, {
+        :with => "spec/examples/update_flowers.csv",
+        :preview => true
+      }).should match_table <<-eo_table.gsub(%r{^      }, '')
       +----------------------------+
       | ID |  Type   | Color | Age |
       +----------------------------+
