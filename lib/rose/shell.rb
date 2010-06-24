@@ -16,13 +16,19 @@ module Rose
     # @param [Array] items the items to sprout the seedling with
     # @return [Ruport::Data::RoseTable] the resulting table
     def bloom(items=[])
-      @seedling.adapter.sprout(@seedling.row, items, @seedling.options)
+      @seedling.adapter.sprout(@seedling, @seedling.options.merge(
+        :attributes => @seedling.row.attributes,
+        :items => items
+      ))
     end
 
     # Provides bulk importing
     # @param [Hash] updates the changes to update the seedling with
-    def photosynthesize(updates={})
-      @seedling.adapter.osmosis(@seedling.root, updates, @seedling.options)
+    def photosynthesize(updates={}, items=[])
+      @seedling.adapter.osmosis(@seedling, @seedling.options.merge(
+        :items   => items, 
+        :updates => updates
+      ))
     end
 
     # Delegates methods to the current seedling

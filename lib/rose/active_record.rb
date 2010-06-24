@@ -5,21 +5,19 @@ module Rose
   # This class is provides ActiveRecord models the ability to run reports
   class ActiveRecordAdapter < ObjectAdapter
     # @see Rose::ObjectAdapter#sprout
-    def self.sprout(row, items=[], options={})
+    def self.sprout(seedling, options={})
       table = nil
       options[:class].transaction do
-        table = super(row, items, options)
+        table = super(seedling, options)
         raise ActiveRecord::Rollback
       end
       table
     end
 
-    # @see Rose::ObjectAdapter#osmosis
-    def self.osmosis(root, updates={}, options={})
-      updates.each do |idy, update|
-        record = root.finder.call(idy)
-        root.updater.call(record, update)
-      end
+    protected
+
+    def self.use_finder(finder, items, idy)
+      finder.call(idy)
     end
   end
 

@@ -5,6 +5,7 @@ module Rose
   autoload :Shell, 'rose/shell'
   autoload :ObjectAdapter, 'rose/object'
   autoload :ActiveRecordAdapter, 'rose/active_record'
+  autoload :CoreExtensions, 'rose/core_extensions'
 
   class << self
     # @return [Hash] global hash of all the named seedlings
@@ -17,7 +18,7 @@ module Rose
   # @param [Symbol] name the name of the Seedling to make
   # @param [Hash] options 
   # @option options [Class] :class (nil) Used during by the adapter to enforce items types
-  # @return [Seedling] the newly formed Seedling
+  # @return [Rose::Seedling] the newly formed Seedling
   def self.make(name, options={}, &blk)
     instance = Rose::Seedling.new(Rose::ObjectAdapter, options)
     instance.instance_eval(&blk)
@@ -26,7 +27,7 @@ module Rose
 end
 
 # @param [Symbol] name the name of the seedling
-# @return [Seedling] find seedling by name and returns it
+# @return [Rose::Seedling] find seedling by name and returns it
 def Rose(name)
   Rose.seedlings[name]
 end

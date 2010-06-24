@@ -9,6 +9,10 @@ module Rose
       # @return [Rose::Attribute::Collection] A collection of attributes
       attr_reader :attributes
 
+      # @return [Rose::Attribute] attribute used to determine which column
+      #   is the id column
+      attr_reader :identity_attribute
+
       def initialize
         @attributes = Attribute::Collection.new
       end
@@ -19,7 +23,7 @@ module Rose
 
       def identity(name, &blk)
         column(name, &blk)
-        @identity = @attributes.last
+        @identity_attribute = @attributes.last
       end
 
       def self.name_and_title(name)

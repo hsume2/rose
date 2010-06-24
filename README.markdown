@@ -90,7 +90,6 @@ Inspired by `Machinist` and `factory_girl`
 
 # Future
 
-* Filtering documentation
 * Documentation
 
 *****

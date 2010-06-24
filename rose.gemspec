@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{rose}
-  s.version = "0.0.2"
+  s.version = "0.0.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Henry Hsu"]
-  s.date = %q{2010-06-16}
+  s.date = %q{2010-06-24}
   s.description = %q{A slick Ruby DSL for reporting.}
   s.email = %q{henry@qlane.com}
   s.extra_rdoc_files = [
@@ -30,13 +30,17 @@ Gem::Specification.new do |s|
      "lib/rose.rb",
      "lib/rose/active_record.rb",
      "lib/rose/attribute.rb",
+     "lib/rose/core_extensions.rb",
      "lib/rose/object.rb",
      "lib/rose/proxy.rb",
      "lib/rose/ruport.rb",
      "lib/rose/seedling.rb",
      "lib/rose/shell.rb",
      "rose.gemspec",
+     "spec/core_extensions_spec.rb",
      "spec/db/schema.rb",
+     "spec/examples/update_flowers.csv",
+     "spec/examples/update_posts.csv",
      "spec/rose/active_record_spec.rb",
      "spec/rose/object_spec.rb",
      "spec/rose_spec.rb",
@@ -49,7 +53,8 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.6}
   s.summary = %q{Reporting like a spring rose, rows and rows of it}
   s.test_files = [
-    "spec/db/schema.rb",
+    "spec/core_extensions_spec.rb",
+     "spec/db/schema.rb",
      "spec/rose/active_record_spec.rb",
      "spec/rose/object_spec.rb",
      "spec/rose_spec.rb",

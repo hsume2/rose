@@ -3,10 +3,10 @@ require 'rose/proxy'
 module Rose
   # Defines the Rose DSL
   class Seedling
-    # @return [RowProxy] the row proxy containing an array of Attributes
+    # @return [Rose::Proxy::Row] the row proxy containing an array of Attributes
     attr_reader :row
 
-    # @return [RootProxy] the root proxy containing attribute finder and updater
+    # @return [Rose::Proxy::Root] the root proxy containing attribute finder and updater
     attr_reader :root
 
     # @return [ObjectAdapter] the adapter
@@ -42,7 +42,7 @@ module Rose
       @alterations << @options[:sort]
     end
 
-    # @yield Attribute::Filter
+    # @yield Rose::Attribute::Filter
     def filter(&filter_block)
       @options[:filter] = Attribute::Filter.new(nil, nil, filter_block)
       @alterations << @options[:filter]

@@ -37,10 +37,10 @@ module RoseActiveRecordSpecs
       person_1 = Person.create(:name => "Person #1")
       person_2 = Person.create(:name => "Person #2")
 
-      post_1 = Post.create(:title => "Post #1")
+      post_1 = Post.create(:title => "Post #1", :guid => "P1")
       post_1.comments.create(:author => person_1)
       post_1.comments.create(:author => person_2)
-      post_2 = Post.create(:title => "Post #2")
+      post_2 = Post.create(:title => "Post #2", :guid => "P2")
       post_2.comments.create(:author => person_2)
     end
 
@@ -240,7 +240,8 @@ module RoseActiveRecordSpecs
       before do
         Post.rose(:for_update) {
           rows do
-            identity("Post", &:title)
+            identity(:guid => "ID")
+            column("Title", &:title)
             column("Comments") { |item| item.comments.size }
           end
 
@@ -248,17 +249,16 @@ module RoseActiveRecordSpecs
 
           roots do
             find do |idy|
-              Post.find_by_title!(idy)
+              Post.find_by_guid!(idy)
             end
-            update do |record, attributes|
-              attributes = attributes.delete_if { |attr, value| !["title"].include?(attr) }
-              record.update_attributes(attributes)
+            update do |record, updates|
+              record.update_attribute(:title, updates["Title"])
             end
           end
         }
 
-        @post_3 = Post.create(:title => "Post #3")
-        @post_4 = Post.create(:title => "Post #4")
+        @post_3 = Post.create(:title => "Post #3", :guid => "P3")
+        @post_4 = Post.create(:title => "Post #4", :guid => "P4")
       end
 
       after do
@@ -267,9 +267,15 @@ module RoseActiveRecordSpecs
 
       it "should update report" do
         Post.seedlings(:for_update).photosynthesize({
-          "Post #3" => { "title" => "Third Post", "something" => "else" },
-          "Post #4" => { "title" => "Fourth Post" }
+          "P3" => { "Title" => "Third Post", "something" => "else" },
+          "P4" => { "Title" => "Fourth Post" }
         })
+
+        Post.all.map(&:title).should == ["Post #1", "Post #2", "Third Post", "Fourth Post"]
+      end
+
+      it "should update report from CSV" do
+        Post.seedlings(:for_update).photosynthesize("spec/examples/update_posts.csv")
 
         Post.all.map(&:title).should == ["Post #1", "Post #2", "Third Post", "Fourth Post"]
       end

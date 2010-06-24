@@ -7,6 +7,7 @@ ActiveRecord::Schema.define(:version => 0) do
   end
   
   create_table :posts, :force => true do |t|
+    t.column :guid, :string
     t.column :title, :string
     t.column :body, :text
     t.column :published, :boolean, :default => true

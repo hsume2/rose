@@ -3,7 +3,7 @@ require 'spec_helper'
 class RoseyObject < Struct.new(:petals, :thorns)
 end
 
-class Flower < Struct.new(:type, :color, :age)
+class Flower < Struct.new(:id, :type, :color, :age)
 end
 
 describe Rose, "Object adapter" do
@@ -164,18 +164,48 @@ describe Rose, "Object adapter" do
       filter(&filter_block)
     }
 
-    @updates_recorder = updates_recorder = []
-    @find_block = find_block = lambda { |updates| 1 }
-    @update_block = update_block = lambda { |updates| updates_recorder << updates }
+    # @updates_recorder = updates_recorder = []
+    @find_block = find_block = lambda { |items, idy|
+      items.find { |item| item.id.to_s == idy }
+    }
+    @update_block = update_block = lambda { |item, updates| item.color = updates["Color"] }
+    #
+    # Rose.make(:with_update) do
+    #   rows do
+    #     identity(:id => "ID")
+    #     column(:type => "Type")
+    #     column(:color => "Color")
+    #     column(:age => "Age")
+    #   end
+    #   roots do
+    #     find(&find_block)
+    #     update do |item, ups|
+    #       item.color = ups["Color"]
+    #     end
+    #   end
+    # end
 
-    Rose.make(:with_update) do
+    Rose.make(:with_find_and_update) do
       rows do
-        identity(:type => "Type")
+        identity(:id => "ID")
+        column(:type => "Type")
         column(:color => "Color")
         column(:age => "Age")
       end
       roots do
         find(&find_block)
+        update(&update_block)
+      end
+    end
+
+    Rose.make(:with_update) do
+      rows do
+        identity(:id => "ID")
+        column(:type => "Type")
+        column(:color => "Color")
+        column(:age => "Age")
+      end
+      roots do
         update(&update_block)
       end
     end
@@ -250,8 +280,14 @@ describe Rose, "Object adapter" do
       end
     end
 
-    it "should support update" do
+    it "should support identity" do
       Rose(:with_update).tap do |report|
+        report.row.identity_attribute.column_name.should == "ID"
+      end
+    end
+
+    it "should support find and update" do
+      Rose(:with_find_and_update).tap do |report|
         report.root.finder.should == @find_block
         report.root.updater.should == @update_block
       end
@@ -262,9 +298,9 @@ describe Rose, "Object adapter" do
     before do
       @arr = [RoseyObject.new(30, 10)]
       @flowers = [
-        Flower.new(:roses, :red, 1),
-        Flower.new(:violets, :blue, 2),
-        Flower.new(:roses, :red, 3)
+        Flower.new(0, :roses, :red, 1),
+        Flower.new(1, :violets, :blue, 2),
+        Flower.new(2, :roses, :red, 3)
       ]
     end
 
@@ -421,7 +457,7 @@ describe Rose, "Object adapter" do
     end
 
     it "should run in order" do
-      @flowers << Flower.new(:roses, :maroon, 3)
+      @flowers << Flower.new(3, :roses, :maroon, 3)
       Rose(:with_ordered_execution_asc).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
       +----------------------------+
       |  Type   |      Color       |
@@ -452,12 +488,50 @@ describe Rose, "Object adapter" do
       eo_table
     end
 
+    it "should find and update" do
+      Rose(:with_find_and_update).photosynthesize({
+        "0" => { "Color" => "blue" }
+      }, @flowers)
+
+      Rose(:with_find_and_update).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
+      +----------------------------+
+      | ID |  Type   | Color | Age |
+      +----------------------------+
+      | 0  | roses   | blue  | 1   |
+      | 1  | violets | blue  | 2   |
+      | 2  | roses   | red   | 3   |
+      +----------------------------+
+      eo_table
+    end
+
     it "should update" do
       Rose(:with_update).photosynthesize({
-        "roses" => { "color" => "blue" }
-      })
+        "0" => { "Color" => "blue" }
+      }, @flowers)
 
-      @updates_recorder.should == [{"roses"=>{"color"=>"blue"}}]
+      Rose(:with_update).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
+      +----------------------------+
+      | ID |  Type   | Color | Age |
+      +----------------------------+
+      | 0  | roses   | blue  | 1   |
+      | 1  | violets | blue  | 2   |
+      | 2  | roses   | red   | 3   |
+      +----------------------------+
+      eo_table
+    end
+
+    it "should update from CSV" do
+      Rose(:with_update).photosynthesize("spec/examples/update_flowers.csv", @flowers)
+
+      Rose(:with_update).bloom(@flowers).should match_table <<-eo_table.gsub(%r{^      }, '')
+      +----------------------------+
+      | ID |  Type   | Color | Age |
+      +----------------------------+
+      | 0  | roses   | blue  | 1   |
+      | 1  | violets | red   | 2   |
+      | 2  | roses   | green | 3   |
+      +----------------------------+
+      eo_table
     end
   end
 end
