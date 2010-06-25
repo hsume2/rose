@@ -141,14 +141,29 @@ Install the gem:
 
 ### Preview
 
-    Rose(:with_find_and_update).photosynthesize(@flowers, {
+    Rose.make(:with_preview) do
+      rows do
+        identity(:id => "ID")
+        column(:type => "Type")
+        column(:color => "Color")
+        column(:age => "Age")
+      end
+      roots do
+        preview_update do |item, updates|
+          item.preview(true); item.color = updates["Color"]
+        end
+        update { raise Exception, "you shouldn't be calling me" }
+      end
+    end
+
+    Rose(:with_preview).photosynthesize(@flowers, {
       :updates => {
         "0" => { "Color" => "blue" }
-      }, 
+      },
       :preview => true
     })
-    
-    Rose(:with_find_and_update).photosynthesize(@flowers, {
+
+    Rose(:with_preview).photosynthesize(@flowers, {
       :csv_file => "change_flowers.csv",
       :preview  => true
     })
@@ -206,21 +221,24 @@ For the most part, the ActiveRecord adapter has the same interface as the Object
         find do |items, idy|
           items.find { |item| item.guid == idy }
         end
+        preview_update do |record, updates|
+          record.title = updates["Title"]
+        end
         update do |record, updates|
           record.update_attribute(:title, updates["Title"])
         end
       end
     }
-    
+
     Post.root_for(:for_update, {
-      :updates => {
+      :with => {
         "1" => { "Title" => "New Title" }
       },
       :preview => true
     }) # => Returns a table
-    
+
     Post.root_for(:for_update, {
-      :csv_file => "change_flowers.csv"
+      :with => "change_flowers.csv"
       :preview  => true
     })
 
