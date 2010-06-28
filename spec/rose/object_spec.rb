@@ -196,7 +196,7 @@ describe Rose, "Object adapter" do
 
     @preview_update_block = preview_update_block = lambda { |item, updates| item.preview(true); item.color = updates["Color"] }
 
-    Rose.make(:with_preview) do
+    Rose.make(:with_preview_update) do
       rows do
         identity(:id => "ID")
         column(:type => "Type")
@@ -206,6 +206,39 @@ describe Rose, "Object adapter" do
       roots do
         preview_update(&preview_update_block)
         update { raise Exception, "you shouldn't be calling me" }
+      end
+    end
+
+    @created = created = []
+    @create_block = create_block = lambda { |idy, updates| created << [idy, updates] }
+
+    Rose.make(:with_create) do
+      rows do
+        identity(:id => "ID")
+        column(:type => "Type")
+        column(:color => "Color")
+        column(:age => "Age")
+      end
+      roots do
+        create(&create_block)
+        update {}
+      end
+    end
+
+    @preview_created = preview_created = []
+    @preview_create_block = preview_create_block = lambda { |idy, updates| preview_created << [idy, updates] }
+
+    Rose.make(:with_preview_create) do
+      rows do
+        identity(:id => "ID")
+        column(:type => "Type")
+        column(:color => "Color")
+        column(:age => "Age")
+      end
+      roots do
+        preview_create(&preview_create_block)
+        create { raise "Not me!"}
+        update {}
       end
     end
   end
@@ -293,8 +326,20 @@ describe Rose, "Object adapter" do
     end
 
     it "should support preview" do
-      Rose(:with_preview).tap do |report|
+      Rose(:with_preview_update).tap do |report|
         report.root.update_previewer.should == @preview_update_block
+      end
+    end
+
+    it "should support create" do
+      Rose(:with_create).tap do |report|
+        report.root.creator.should == @create_block
+      end
+    end
+
+    it "should support preview create" do
+      Rose(:with_preview_create).tap do |report|
+        report.root.create_previewer.should == @preview_create_block
       end
     end
   end
@@ -544,7 +589,7 @@ describe Rose, "Object adapter" do
         flower.expects(:preview).with(true)
       end
 
-      Rose(:with_preview).photosynthesize(@flowers, {
+      Rose(:with_preview_update).photosynthesize(@flowers, {
         :with => {
           "0" => { "Color" => "blue" },
           "1" => { "Color" => "blue" },
@@ -567,7 +612,7 @@ describe Rose, "Object adapter" do
         flower.expects(:preview).with(true)
       end
 
-      Rose(:with_preview).photosynthesize(@flowers, {
+      Rose(:with_preview_update).photosynthesize(@flowers, {
         :with => "spec/examples/update_flowers.csv",
         :preview => true
       }).should match_table <<-eo_table.gsub(%r{^      }, '')
@@ -579,6 +624,27 @@ describe Rose, "Object adapter" do
       | 2  | roses   | green | 3   |
       +----------------------------+
       eo_table
+    end
+
+    it "should create" do
+      Rose(:with_create).photosynthesize(@flowers, {
+        :with => {
+          "9" => { "Color" => "blue" }
+        }
+      })
+
+      @created.should == [["9", { "Color" => "blue" }]]
+    end
+
+    it "should preview create" do
+      Rose(:with_preview_create).photosynthesize(@flowers, {
+        :with => {
+          "9" => { "Color" => "blue" }
+        },
+        :preview => true
+      })
+
+      @preview_created.should == [["9", { "Color" => "blue" }]]
     end
   end
 end

@@ -362,6 +362,73 @@ module RoseActiveRecordSpecs
         Post.all.map(&:title).should == ["Post #1", "Post #2"]
       end
     end
+    
+    describe "create import report" do
+      before do
+        Post.rose(:for_create) {
+          rows do
+            identity(:guid => "ID")
+            column("Title", &:title)
+            column("Comments") { |item| item.comments.size }
+          end
+    
+          sort("Comments", :descending)
+    
+          roots do
+            find do |items, idy|
+              items.find { |item| item.guid == idy }
+            end
+            preview_create do |idy, updates|
+              post = Post.new(:guid => idy)
+              post.title = updates["Title"]
+              post
+            end
+            create do |idy, updates|
+              post = create_previewer.call(idy, updates)
+              post.save!
+              post
+            end
+          end
+        }
+      end
+      
+      it "should preview create" do
+        Post.root_for(:for_create, {
+          :with => {
+            "P3" => { "Title" => "Post #3" }
+          },
+          :preview => true
+        }).should match_table <<-eo_table.gsub(%r{^        }, '')
+        +-------------------------+
+        | ID |  Title  | Comments |
+        +-------------------------+
+        | P1 | Post #1 | 2        |
+        | P2 | Post #2 | 1        |
+        | P3 | Post #3 | 0        |
+        +-------------------------+
+        eo_table
+      end
+      
+      it "should create" do
+        Post.root_for(:for_create, {
+          :with => {
+            "P3" => { "Title" => "Post #3" }
+          }
+        }).should match_table <<-eo_table.gsub(%r{^        }, '')
+        +-------------------------+
+        | ID |  Title  | Comments |
+        +-------------------------+
+        | P1 | Post #1 | 2        |
+        | P2 | Post #2 | 1        |
+        | P3 | Post #3 | 0        |
+        +-------------------------+
+        eo_table
+        
+        Post.last.title.should == "Post #3"
+        
+        Post.last.destroy
+      end
+    end
   end
 
 end

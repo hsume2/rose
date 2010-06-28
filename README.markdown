@@ -221,6 +221,16 @@ For the most part, the ActiveRecord adapter has the same interface as the Object
         find do |items, idy|
           items.find { |item| item.guid == idy }
         end
+        preview_create do |idy, updates|
+          post = Post.new(:guid => idy)
+          post.title = updates["Title"]
+          post
+        end
+        create do |idy, updates|
+          post = create_previewer.call(idy, updates)
+          post.save!
+          post
+        end
         preview_update do |record, updates|
           record.title = updates["Title"]
         end

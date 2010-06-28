@@ -77,6 +77,8 @@ module Rose
       attr_reader :finder
       attr_reader :updater
       attr_reader :update_previewer
+      attr_reader :creator
+      attr_reader :create_previewer
 
       def find(&blk)
         @finder = blk
@@ -90,9 +92,22 @@ module Rose
         @update_previewer = blk
       end
 
+      def create(&blk)
+        @creator = blk
+      end
+
+      def preview_create(&blk)
+        @create_previewer = blk
+      end
+
       # @param [true, false] preview whether to use the update_previewer or not
       def updater(preview = false)
         preview ? @update_previewer : @updater
+      end
+
+      # @param [true, false] preview whether to use the create_previewer or not
+      def creator(preview = false)
+        preview ? @create_previewer : @creator
       end
     end
   end

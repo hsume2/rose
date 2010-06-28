@@ -45,7 +45,7 @@ module Rose
       root, row = seedling.root, seedling.row
       idy_attr = row.identity_attribute
 
-      case hash_or_csv
+      items = case hash_or_csv
       when String # CSV File
         self.osmosis_from_csv(root, options.merge(
           :idy_attr => idy_attr,
@@ -94,11 +94,18 @@ module Rose
     def self.osmosis_from_hash(root, options={})
       idy_attr, updates, items = required_values(options, :idy_attr, :updates, :items)
       finder = root.finder || auto_finder(idy_attr)
+      new_items = []
       updates.each do |idy, update|
-        record = use_finder(finder, items, idy) || next
-        root.updater(options[:preview]).call(record, update)
+        record = use_finder(finder, items, idy)
+        if record
+          root.updater(options[:preview]).call(record, update)
+        elsif creator = root.creator(options[:preview])
+          new_items << creator.call(idy, update)
+        else
+          next
+        end
       end
-      items
+      items | new_items
     end
 
     def self.data_from_csv(csv_file)

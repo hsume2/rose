@@ -21,8 +21,6 @@ module Rose
     end
 
     module ClassMethods
-      include Rose::CoreExtensions
-
       def rose(name, options={}, &blk)
         instance = Rose::Seedling.new(Rose::ActiveRecordAdapter, options.merge(:class => self))
         instance.instance_eval(&blk)
