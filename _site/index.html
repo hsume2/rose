@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>hsume2/rose @ GitHub</title>
+  <link href="stylesheets/application.css" media="all" rel="stylesheet" type="text/css"/>
+  <link href="stylesheets/highlight.css" media="all" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+  <a href="http://github.com/hsume2/rose"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+  <div id="container">
+    <div class="download">
+      <a href="http://github.com/hsume2/rose/zipball/master"><img border="0" width="90" src="http://github.com/images/modules/download/zip.png" /></a>
+      <a href="http://github.com/hsume2/rose/tarball/master"><img border="0" width="90" src="http://github.com/images/modules/download/tar.png" /></a>
+    </div>
+
+    <h1><a href="http://github.com/hsume2/rose">rose</a>
+  <span class="small">by <a href="http://github.com/hsume2">hsume2</a></span>
+</h1>
+<div class="description">
+  A slick Ruby DSL for reporting.
+</div>
+<h2>Install</h2>
+<p>
+<div class="highlight"><pre><code class="bash"><span class="nv">$ </span>gem install rose
+</code></pre>
+</div>
+</p>
+<h2>Usage</h2>
+<p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:worlds</span><span class="p">)</span> <span class="k">do</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:hello</span> <span class="o">=&gt;</span> <span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:world</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">World</span> <span class="o">&lt;</span> <span class="no">Struct</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">:hello</span><span class="p">,</span> <span class="ss">:world</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="no">Rose</span><span class="p">(</span><span class="ss">:worlds</span><span class="p">)</span><span class="o">.</span><span class="n">bloom</span><span class="p">(</span><span class="o">[</span><span class="no">World</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Say&quot;</span><span class="p">,</span> <span class="s2">&quot;what?&quot;</span><span class="p">)</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">to_s</span>
+
+<span class="o">+---------------+</span>
+<span class="o">|</span> <span class="no">Hello</span> <span class="o">|</span> <span class="n">world</span> <span class="o">|</span>
+<span class="o">+---------------+</span>
+<span class="o">|</span> <span class="no">Say</span>   <span class="o">|</span> <span class="n">what?</span> <span class="o">|</span>
+<span class="o">+---------------+</span>
+</code></pre>
+</div>
+
+<div class="highlight"><pre><code class="ruby"><span class="no">WIP</span>
+</code></pre>
+</div>
+</p>
+<h2>Dependencies</h2>
+<p>
+<div class="highlight"><pre><code class="bash">gem <span class="s1">&#39;ruport&#39;</span>, <span class="s1">&#39;1.6.3&#39;</span>
+</code></pre>
+</div>
+</p>
+<h2>License</h2>
+<p>MIT</p>
+<h2>Authors</h2>
+<p>hsume2 (henry.hsu@photomugs.com)
+  <br/>Henry Hsu (henry@qlane.com)
+  <br/>
+  <br/>
+</p>
+<h2>Contact</h2>
+<p>Henry Hsu (henry@qlane.com)
+  <br/>
+</p>
+<h2>Download</h2>
+<p>
+  You can download this project in either
+  <a href="http://github.com/hsume2/rose/zipball/master">zip</a> or
+  <a href="http://github.com/hsume2/rose/tarball/master">tar</a> formats.
+</p>
+<p>You can also clone the project with <a href="http://git-scm.com">Git</a>
+  by running:
+<div class="highlight"><pre><code class="bash"><span class="nv">$ </span>git clone git://github.com/hsume2/rose
+</code></pre>
+</div>
+</p>
+
+    <div class="footer">
+      get the source code on GitHub : <a href="http://github.com/hsume2/rose">hsume2/rose</a>
+    </div>
+  </div>
+</body>
+</html>
