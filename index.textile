@@ -157,7 +157,7 @@ Rose.make(:with_find_and_update) do
 
   # The bare minimum for an importable report
   roots do
-    # find is optional. By default will return items with item["ID"] == idy
+    # find is optional. By default will return first item with item["ID"] == idy
     find do |items, idy|
       items.find { |item| item.id.to_s == idy }
     end
@@ -209,7 +209,7 @@ Rose(:with_find_and_update).photosynthesize(@flowers, {
 })
 {% endhighlight %}
 
-Where +change_flowers.csv+
+Where +change_flowers.csv+ is
 
 {% highlight text %}
 ID,Type,Color,Age
@@ -324,7 +324,7 @@ Employee.root_for(:department_salaries, {
 
 I say "Almost", because for AR, seedlings are namespaced within the class. If you want direct access, you can use +Employee.seedlings(:department_salaries)+.
 
-Also, for AR, reporting happends within a transaction that is rolled-back on completion to prevent unwanted commits (at least on the +:class+)...
+Also, for AR, reporting happens within a transaction that is rolled-back on completion to prevent unwanted commits (at least on the +:class+)...
 
 h2. Notes
 
