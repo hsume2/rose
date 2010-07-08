@@ -15,74 +15,282 @@
       <a href="http://github.com/hsume2/rose/tarball/master"><img border="0" width="90" src="http://github.com/images/modules/download/tar.png" /></a>
     </div>
 
-    <h1><a href="http://github.com/hsume2/rose">rose</a>
-  <span class="small">by <a href="http://github.com/hsume2">hsume2</a></span>
-</h1>
-<div class="description">
-  A slick Ruby DSL for reporting.
-</div>
-<h2>Install</h2>
-<p>
+    <h1><a href="http://github.com/hsume2/rose">Rose</a></h1>
+<div class="description">A slick Ruby <span class="caps">DSL</span> for reporting.</div>
+<p><ins>ActiveRecord</ins> integrated too! (<a href="#ar">jump</a>)</p>
+<h2>Installation</h2>
 <div class="highlight"><pre><code class="bash"><span class="nv">$ </span>gem install rose
 </code></pre>
-</div>
-</p>
-<h2>Usage</h2>
-<p>
-<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:worlds</span><span class="p">)</span> <span class="k">do</span>
+</div><h2>Getting Started</h2>
+<h3>Making a Report</h3>
+<p>Start with any Ruby <ins>Object</ins></p>
+<div class="highlight"><pre><code class="ruby"><span class="k">class</span> <span class="nc">Flower</span> <span class="o">&lt;</span> <span class="no">Struct</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">:id</span><span class="p">,</span> <span class="ss">:type</span><span class="p">,</span> <span class="ss">:color</span><span class="p">,</span> <span class="ss">:age</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre>
+</div><p>Specify your column headers and how values should be generated</p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:poem</span><span class="p">,</span> <span class="ss">:class</span> <span class="o">=&gt;</span> <span class="no">Flower</span><span class="p">)</span> <span class="k">do</span> <span class="c1"># :class restricts reporting to Flowers</span>
   <span class="n">rows</span> <span class="k">do</span>
-    <span class="n">column</span><span class="p">(</span><span class="ss">:hello</span> <span class="o">=&gt;</span> <span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
-    <span class="n">column</span><span class="p">(</span><span class="ss">:world</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:type</span> <span class="o">=&gt;</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="s2">&quot;Color&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="ss">:color</span><span class="p">)</span> <span class="c1"># Equivalent to column(:color =&gt; &quot;Color&quot;)</span>
+                             <span class="c1"># Equivalent to column(&quot;Color&quot;) { |item| item.color }</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+</div><p>Of the <span class="caps">DSL</span>, <ins>rows {}</ins> is required, the rest is optional.</p>
+<h3>Running your Report</h3>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="p">(</span><span class="ss">:poem</span><span class="p">)</span><span class="o">.</span><span class="n">bloom</span><span class="p">(</span><span class="o">[</span>
+  <span class="no">Flower</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="ss">:roses</span><span class="p">,</span> <span class="ss">:red</span><span class="p">),</span>
+  <span class="no">Flower</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="ss">:violets</span><span class="p">,</span> <span class="ss">:blue</span><span class="p">)</span>
+<span class="o">]</span><span class="p">)</span>
+</code></pre>
+</div><p><ins>Rose(:poem).bloom</ins> returns a <ins>Ruport::Data::RoseTable</ins> (which is just a <ins>Ruport::Data::Table</ins> with a few extra methods). And like it&#8217;s predecessor, you can output to Text, <span class="caps">HTML</span>, <span class="caps">PDF</span>, <span class="caps">CSV</span>, etc. For example:</p>
+<div class="highlight"><pre><code class="text">+-----------------+
+|  Type   | Color |
++-----------------+
+| roses   | red   |
+| violets | blue  |
++-----------------+
+</code></pre>
+</div><h3>Sorting</h3>
+<p>Sort <ins>:ascending</ins> (default) or <ins>:descending</ins></p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:sorted_by_age</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:type</span> <span class="o">=&gt;</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:color</span> <span class="o">=&gt;</span> <span class="s2">&quot;Color&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:age</span> <span class="o">=&gt;</span> <span class="s2">&quot;Age&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="c1"># Notice I&#39;m referring to the column header &quot;Age&quot; instead of the attribute :age</span>
+  <span class="n">sort</span><span class="p">(</span><span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="ss">:descending</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+</div><p>Sorting happens with the text value of each cell (data is coerced to a <ins>String</ins> so it can be displayed in the report). If <ins>String</ins> comparisons don&#8217;t satisfy you, or you just want custom sorting</p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:sort_it_my_way</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:type</span> <span class="o">=&gt;</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:age</span> <span class="o">=&gt;</span> <span class="s2">&quot;Age&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">sort</span><span class="p">(</span><span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="ss">:descending</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">age</span><span class="o">|</span> <span class="n">age</span><span class="o">.</span><span class="n">to_i</span> <span class="o">*</span> <span class="mi">2</span> <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div><h3>Filtering</h3>
+<p>You can apply filtering to reject rows from your report.</p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:no_blue_please</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:type</span> <span class="o">=&gt;</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:color</span> <span class="o">=&gt;</span> <span class="s2">&quot;Color&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:age</span> <span class="o">=&gt;</span> <span class="s2">&quot;Age&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">filter</span> <span class="k">do</span> <span class="o">|</span><span class="n">row</span><span class="o">|</span>
+    <span class="c1"># Notice I&#39;m using &quot;Color&quot;, not :color</span>
+    <span class="n">row</span><span class="o">[</span><span class="s2">&quot;Color&quot;</span><span class="o">]</span> <span class="o">!=</span> <span class="s2">&quot;blue&quot;</span>
+  <span class="k">end</span>
+<span class="p">}</span>
+</code></pre>
+</div><p>We use <ins>&#8220;Color&#8221;</ins> instead of <ins>:color</ins>, because row is a <ins>Ruport::Data::Record</ins>.</p>
+<h3>Summaries</h3>
+<p>Do sigma-type operations on your report, for say if you wanted a summary of each roses&#8217; petal count distribution.</p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:count_all_colors</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:type</span> <span class="o">=&gt;</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:color</span> <span class="o">=&gt;</span> <span class="s2">&quot;Color&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">summary</span><span class="p">(</span><span class="s2">&quot;Type&quot;</span><span class="p">)</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="s2">&quot;Color&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">colors</span><span class="o">|</span> <span class="n">colors</span><span class="o">.</span><span class="n">uniq</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)</span> <span class="p">}</span>
+    <span class="n">column</span><span class="p">(</span><span class="s2">&quot;Count&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">colors</span><span class="o">|</span> <span class="n">colors</span><span class="o">.</span><span class="n">size</span> <span class="p">}</span>
+  <span class="k">end</span>
+<span class="p">}</span>
+</code></pre>
+</div><h3>Pivots</h3>
+<p>For a pivot with row <em>Color</em>, column <em>Type</em>, and data <em>Ages</em></p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:pivot_example</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:type</span> <span class="o">=&gt;</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:color</span> <span class="o">=&gt;</span> <span class="s2">&quot;Color&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:age</span> <span class="o">=&gt;</span> <span class="s2">&quot;Age&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">pivot</span><span class="p">(</span><span class="s2">&quot;Color&quot;</span><span class="p">,</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">rows</span><span class="o">|</span>
+    <span class="c1"># Sum of Ages</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:Age</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:to_i</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">sum</span><span class="p">,</span><span class="n">x</span><span class="o">|</span> <span class="n">sum</span><span class="o">+</span><span class="n">x</span> <span class="p">}</span>
+  <span class="k">end</span>
+<span class="p">}</span>
+</code></pre>
+</div><h2>Advanced Stuff: Import (Update)</h2>
+<p>Not only can you output data, you can import data too!</p>
+<h3>Making a Report Ready for Import</h3>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:with_find_and_update</span><span class="p">)</span> <span class="k">do</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">identity</span><span class="p">(</span><span class="ss">:id</span> <span class="o">=&gt;</span> <span class="s2">&quot;ID&quot;</span><span class="p">)</span>      <span class="c1"># !!!</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:type</span> <span class="o">=&gt;</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:color</span> <span class="o">=&gt;</span> <span class="s2">&quot;Color&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:age</span> <span class="o">=&gt;</span> <span class="s2">&quot;Age&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># The bare minimum for an importable report</span>
+  <span class="n">roots</span> <span class="k">do</span>
+    <span class="c1"># find is optional. By default will return items with item[&quot;ID&quot;] == idy</span>
+    <span class="n">find</span> <span class="k">do</span> <span class="o">|</span><span class="n">items</span><span class="p">,</span> <span class="n">idy</span><span class="o">|</span>
+      <span class="n">items</span><span class="o">.</span><span class="n">find</span> <span class="p">{</span> <span class="o">|</span><span class="n">item</span><span class="o">|</span> <span class="n">item</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">to_s</span> <span class="o">==</span> <span class="n">idy</span> <span class="p">}</span>
+    <span class="k">end</span>
+    <span class="n">update</span> <span class="k">do</span> <span class="o">|</span><span class="n">item</span><span class="p">,</span> <span class="n">updates</span><span class="o">|</span>
+      <span class="n">item</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">updates</span><span class="o">[</span><span class="s2">&quot;Color&quot;</span><span class="o">]</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+</div><p>In order to update via import, you <strong>must</strong> specify one column as the <ins>identity</ins> column. <ins>Rose</ins> will pass in the correct cell as <ins>idy</ins> in your <ins>find {}</ins></p>
+<h3>Manual Import</h3>
+<p>Assuming</p>
+<div class="highlight"><pre><code class="ruby"><span class="vi">@flowers</span> <span class="o">=</span> <span class="o">[</span>
+  <span class="no">Flower</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="ss">:roses</span><span class="p">,</span> <span class="ss">:red</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+  <span class="no">Flower</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="ss">:violets</span><span class="p">,</span> <span class="ss">:blue</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+  <span class="no">Flower</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="ss">:roses</span><span class="p">,</span> <span class="ss">:red</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="o">]</span>
+</code></pre>
+</div><p>Provide hash <ins>:with</ins>, paired <ins>idy</ins> =&gt; <ins>updates</ins>.</p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="p">(</span><span class="ss">:with_find_and_update</span><span class="p">)</span><span class="o">.</span><span class="n">photosynthesize</span><span class="p">(</span><span class="vi">@flowers</span><span class="p">,</span> <span class="p">{</span>
+  <span class="ss">:with</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="s2">&quot;0&quot;</span> <span class="o">=&gt;</span> <span class="p">{</span> <span class="s2">&quot;Color&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;blue&quot;</span> <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+</div><p><ins>&#8220;0&#8221;</ins> will be passed into <ins>find {}</ins>, returning <ins>@flowers.first</ins>. That will then be passed into <ins>update {}</ins> as <ins>item</ins>, along with <ins>{ &#8220;Color&#8221; =&gt; &#8220;blue&#8221; }</ins> as <ins>updates</ins>. The resulting <ins>@flowers</ins> would be</p>
+<div class="highlight"><pre><code class="text">[ #&lt;struct Flower id=0, type=:roses, color=&quot;blue&quot;, age=1&gt;, 
+  #&lt;struct Flower id=1, type=:violets, color=:blue, age=2&gt;, 
+  #&lt;struct Flower id=2, type=:roses, color=:red, age=3&gt;
+]
+</code></pre>
+</div><h3><span class="caps">CSV</span> Import</h3>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="p">(</span><span class="ss">:with_find_and_update</span><span class="p">)</span><span class="o">.</span><span class="n">photosynthesize</span><span class="p">(</span><span class="vi">@flowers</span><span class="p">,</span> <span class="p">{</span>
+  <span class="ss">:csv_file</span> <span class="o">=&gt;</span> <span class="s2">&quot;change_flowers.csv&quot;</span>
+<span class="p">})</span>
+</code></pre>
+</div><p>Where <ins>change_flowers.csv</ins></p>
+<div class="highlight"><pre><code class="text">ID,Type,Color,Age
+0,roses,blue,1
+1,violets,red,2
+2,roses,green,3
+</code></pre>
+</div><p>Would result in</p>
+<div class="highlight"><pre><code class="text">[ #&lt;struct Flower id=0, type=:roses, color=&quot;blue&quot;, age=1&gt;,
+  #&lt;struct Flower id=1, type=:violets, color=&quot;red&quot;, age=2&gt;,
+  #&lt;struct Flower id=2, type=:roses, color=&quot;green&quot;, age=3&gt;
+]
+</code></pre>
+</div><h3>Preview Import</h3>
+<p>Sometimes you only want to see changes and not commit them (especially in the case of ActiveRecord)</p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:with_preview</span><span class="p">)</span> <span class="k">do</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">identity</span><span class="p">(</span><span class="ss">:id</span> <span class="o">=&gt;</span> <span class="s2">&quot;ID&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:type</span> <span class="o">=&gt;</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:color</span> <span class="o">=&gt;</span> <span class="s2">&quot;Color&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:age</span> <span class="o">=&gt;</span> <span class="s2">&quot;Age&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">roots</span> <span class="k">do</span>
+    <span class="n">preview_update</span> <span class="k">do</span> <span class="o">|</span><span class="n">item</span><span class="p">,</span> <span class="n">updates</span><span class="o">|</span>
+      <span class="c1"># For example...</span>
+      <span class="n">item</span><span class="o">.</span><span class="n">preview</span><span class="p">(</span><span class="kp">true</span><span class="p">);</span> <span class="n">item</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">updates</span><span class="o">[</span><span class="s2">&quot;Color&quot;</span><span class="o">]</span>
+    <span class="k">end</span>
+    <span class="n">update</span> <span class="p">{</span> <span class="k">raise</span> <span class="no">Exception</span><span class="p">,</span> <span class="s2">&quot;you shouldn&#39;t be calling me&quot;</span> <span class="p">}</span>
   <span class="k">end</span>
 <span class="k">end</span>
 
-<span class="k">class</span> <span class="nc">World</span> <span class="o">&lt;</span> <span class="no">Struct</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">:hello</span><span class="p">,</span> <span class="ss">:world</span><span class="p">)</span>
+<span class="no">Rose</span><span class="p">(</span><span class="ss">:with_preview</span><span class="p">)</span><span class="o">.</span><span class="n">photosynthesize</span><span class="p">(</span><span class="vi">@flowers</span><span class="p">,</span> <span class="p">{</span>
+  <span class="ss">:with</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="s2">&quot;0&quot;</span> <span class="o">=&gt;</span> <span class="p">{</span> <span class="s2">&quot;Color&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;blue&quot;</span> <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="ss">:preview</span> <span class="o">=&gt;</span> <span class="kp">true</span> <span class="c1"># This is new</span>
+<span class="p">})</span>
+
+<span class="no">Rose</span><span class="p">(</span><span class="ss">:with_preview</span><span class="p">)</span><span class="o">.</span><span class="n">photosynthesize</span><span class="p">(</span><span class="vi">@flowers</span><span class="p">,</span> <span class="p">{</span>
+  <span class="ss">:with</span> <span class="o">=&gt;</span> <span class="s2">&quot;change_flowers.csv&quot;</span><span class="p">,</span>
+  <span class="ss">:preview</span>  <span class="o">=&gt;</span> <span class="kp">true</span> <span class="c1"># This is new</span>
+<span class="p">})</span>
+</code></pre>
+</div><h2>Advanced Stuff: Import (Create)</h2>
+<p>What to do when additional information shows up in your import? Create!</p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:with_preview_create</span><span class="p">)</span> <span class="k">do</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">identity</span><span class="p">(</span><span class="ss">:id</span> <span class="o">=&gt;</span> <span class="s2">&quot;ID&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:type</span> <span class="o">=&gt;</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:color</span> <span class="o">=&gt;</span> <span class="s2">&quot;Color&quot;</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:age</span> <span class="o">=&gt;</span> <span class="s2">&quot;Age&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">roots</span> <span class="k">do</span>
+    <span class="n">preview_create</span> <span class="p">{</span> <span class="o">|</span><span class="n">idy</span><span class="p">,</span> <span class="n">updates</span><span class="o">|</span> <span class="c1"># Initialize }</span>
+    <span class="n">create</span> <span class="p">{</span> <span class="o">|</span><span class="n">idy</span><span class="p">,</span> <span class="n">updates</span><span class="o">|</span> <span class="c1"># Initialize and save }</span>
+    <span class="n">update</span> <span class="p">{}</span>
+  <span class="k">end</span>
 <span class="k">end</span>
-
-<span class="no">Rose</span><span class="p">(</span><span class="ss">:worlds</span><span class="p">)</span><span class="o">.</span><span class="n">bloom</span><span class="p">(</span><span class="o">[</span><span class="no">World</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Say&quot;</span><span class="p">,</span> <span class="s2">&quot;what?&quot;</span><span class="p">)</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">to_s</span>
-
-<span class="o">+---------------+</span>
-<span class="o">|</span> <span class="no">Hello</span> <span class="o">|</span> <span class="n">world</span> <span class="o">|</span>
-<span class="o">+---------------+</span>
-<span class="o">|</span> <span class="no">Say</span>   <span class="o">|</span> <span class="n">what?</span> <span class="o">|</span>
-<span class="o">+---------------+</span>
 </code></pre>
-</div>
-
-<div class="highlight"><pre><code class="ruby"><span class="no">WIP</span>
+</div><p><ins>Rose</ins> will create when the <ins>find {}</ins> returns <ins>nil</ins>. And depending on whether or not <ins>:preview</ins> is true, it will call <ins>preview_create</ins> or <ins>create</ins>, respectively.</p>
+<h2><a name="ar">ActiveRecord</a></h2>
+<div class="highlight"><pre><code class="bash">config.gem <span class="s1">&#39;rose&#39;</span>, :lib <span class="o">=</span>&gt; <span class="s1">&#39;rose/active_record&#39;</span>
 </code></pre>
-</div>
-</p>
+</div><p>The <span class="caps">API</span> is the same for the most part, except:</p>
+<div class="highlight"><pre><code class="bash">Employee.rose<span class="o">(</span>:department_salaries<span class="o">)</span> <span class="o">{</span> ... <span class="o">}</span>
+<span class="c"># Almost equivalent to </span>
+<span class="c">#   Rose.make(:department_salaries, :class =&gt; Employee)</span>
+
+Employee.rose_for<span class="o">(</span>:department_salaries<span class="o">)</span>
+<span class="c"># Almost equivalent to</span>
+<span class="c">#   Rose(:department_salaries).photosynthesize(Employee.all)</span>
+
+Employee.rose_for<span class="o">(</span>:department_salaries, :conditions <span class="o">=</span>&gt; <span class="o">[</span><span class="s2">&quot;salary &lt;&gt; ?&quot;</span>, nil<span class="o">])</span>
+<span class="c"># Almost equivalent to</span>
+<span class="c">#   Rose(:department_salaries).photosynthesize(</span>
+<span class="c">#     Employee.find(:all, :conditions =&gt; [&quot;salary &lt;&gt; ?&quot;, nil])</span>
+<span class="c">#   )</span>
+
+Employee.root_for<span class="o">(</span>:department_salaries, <span class="o">{</span>
+  :with <span class="o">=</span>&gt; <span class="o">{</span>
+    <span class="s2">&quot;1&quot;</span> <span class="o">=</span>&gt; <span class="o">{</span> <span class="s2">&quot;Title&quot;</span> <span class="o">=</span>&gt; <span class="s2">&quot;New Title&quot;</span> <span class="o">}</span>
+  <span class="o">}</span>,
+  :preview <span class="o">=</span>&gt; <span class="nb">true</span>
+<span class="o">})</span>
+<span class="c"># Almost equivalent to</span>
+<span class="c">#   Rose(:department_salaries).photosynthesize(</span>
+<span class="c">#     Employee.find(:all, :conditions =&gt; [&quot;salary &lt;&gt; ?&quot;, nil]), {</span>
+<span class="c">#     :with =&gt; {</span>
+<span class="c">#       &quot;1&quot; =&gt; { &quot;Title&quot; =&gt; &quot;New Title&quot; }</span>
+<span class="c">#     },</span>
+<span class="c">#     :preview =&gt; true</span>
+<span class="c">#   })</span>
+</code></pre>
+</div><p>I say &#8220;Almost&#8221;, because for AR, seedlings are namespaced within the class. If you want direct access, you can use <ins>Employee.seedlings(:department_salaries)</ins></p>
+<h2>Notes</h2>
+<p>Rose obeys order of execution. If you do <ins>summary</ins> first and then <ins>sort</ins>, you can only sort on the resulting column headers from your <ins>summary</ins>.</p>
+<p>To illustrate</p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:okay</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="ss">:type</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:color</span> <span class="o">=&gt;</span> <span class="s2">&quot;Color&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">sort</span><span class="p">(</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="ss">:descending</span><span class="p">)</span>
+  <span class="n">summary</span><span class="p">(</span><span class="s2">&quot;Type&quot;</span><span class="p">)</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="s2">&quot;Color&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">colors</span><span class="o">|</span> <span class="n">colors</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)</span> <span class="p">}</span>
+  <span class="k">end</span>
+<span class="p">}</span>
+</code></pre>
+</div><p>is valid, but</p>
+<div class="highlight"><pre><code class="ruby"><span class="no">Rose</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="ss">:not_okay</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">rows</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="ss">:type</span><span class="p">)</span>
+    <span class="n">column</span><span class="p">(</span><span class="ss">:color</span> <span class="o">=&gt;</span> <span class="s2">&quot;Color&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">summary</span><span class="p">(</span><span class="s2">&quot;Type&quot;</span><span class="p">)</span> <span class="k">do</span>
+    <span class="n">column</span><span class="p">(</span><span class="s2">&quot;Color&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">colors</span><span class="o">|</span> <span class="n">colors</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)</span> <span class="p">}</span>
+  <span class="k">end</span>
+  <span class="n">sort</span><span class="p">(</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="ss">:descending</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+</div><p>is not.</p>
 <h2>Dependencies</h2>
-<p>
 <div class="highlight"><pre><code class="bash">gem <span class="s1">&#39;ruport&#39;</span>, <span class="s1">&#39;1.6.3&#39;</span>
 </code></pre>
-</div>
-</p>
-<h2>License</h2>
-<p>MIT</p>
-<h2>Authors</h2>
-<p>hsume2 (henry.hsu@photomugs.com)
-  <br/>Henry Hsu (henry@qlane.com)
-  <br/>
-  <br/>
-</p>
-<h2>Contact</h2>
-<p>Henry Hsu (henry@qlane.com)
-  <br/>
-</p>
-<h2>Download</h2>
-<p>
-  You can download this project in either
-  <a href="http://github.com/hsume2/rose/zipball/master">zip</a> or
-  <a href="http://github.com/hsume2/rose/tarball/master">tar</a> formats.
-</p>
-<p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-  by running:
-<div class="highlight"><pre><code class="bash"><span class="nv">$ </span>git clone git://github.com/hsume2/rose
-</code></pre>
-</div>
-</p>
+</div><h2>Other</h2>
+<p>Inspired by <ins>Machinist</ins> and <ins>factory_girl</ins>.</p>
+<h2>Copyright</h2>
+<p>Copyright &#169; 2010 Henry Hsu. See <span class="caps">LICENSE</span> for details.</p>
 
     <div class="footer">
       get the source code on GitHub : <a href="http://github.com/hsume2/rose">hsume2/rose</a>

@@ -1,0 +1,373 @@
+---
+layout: default
+title: hsume2/rose @ GitHub
+---
+h1. "Rose":http://github.com/hsume2/rose
+
+div(description). A slick Ruby DSL for reporting.
+
++ActiveRecord+ integrated too! ("jump":#ar)
+
+h2. Installation
+
+{% highlight bash %}$ gem install rose{% endhighlight %}
+
+h2. Getting Started
+
+h3. Making a Report
+
+Start with any Ruby +Object+
+
+{% highlight ruby %}
+class Flower < Struct.new(:id, :type, :color, :age)
+end
+{% endhighlight %}
+
+Specify your column headers and how values should be generated
+
+{% highlight ruby %}
+Rose.make(:poem, :class => Flower) do # :class restricts reporting to Flowers
+  rows do
+    column(:type => "Type")
+    column("Color", &:color) # Equivalent to column(:color => "Color")
+                             # Equivalent to column("Color") { |item| item.color }
+  end
+end
+{% endhighlight %}
+
+Of the DSL, +rows {}+ is required, the rest is optional.
+
+h3. Running your Report
+
+{% highlight ruby %}
+Rose(:poem).bloom([
+  Flower.new(0, :roses, :red),
+  Flower.new(1, :violets, :blue)
+])
+{% endhighlight %}
+
++Rose(:poem).bloom+ returns a +Ruport::Data::RoseTable+ (which is just a +Ruport::Data::Table+ with a few extra methods). And like it's predecessor, you can output to Text, HTML, PDF, CSV, etc. For example:
+
+{% highlight text %}
++-----------------+
+|  Type   | Color |
++-----------------+
+| roses   | red   |
+| violets | blue  |
++-----------------+
+{% endhighlight %}
+
+h3. Sorting
+
+Sort +:ascending+ (default) or +:descending+
+
+{% highlight ruby %}
+Rose.make(:sorted_by_age) {
+  rows do
+    column(:type => "Type")
+    column(:color => "Color")
+    column(:age => "Age")
+  end
+  # Notice I'm referring to the column header "Age" instead of the attribute :age
+  sort("Age", :descending)
+}
+{% endhighlight %}
+
+Sorting happens with the text value of each cell (data is coerced to a +String+ so it can be displayed in the report). If +String+ comparisons don't satisfy you, or you just want custom sorting
+
+{% highlight ruby %}
+Rose.make(:sort_it_my_way) {
+  rows do
+    column(:type => "Type")
+    column(:age => "Age")
+  end
+  sort("Age", :descending) { |age| age.to_i * 2 }
+}
+{% endhighlight %}
+
+h3. Filtering
+
+You can apply filtering to reject rows from your report.
+
+{% highlight ruby %}
+Rose.make(:no_blue_please) {
+  rows do
+    column(:type => "Type")
+    column(:color => "Color")
+    column(:age => "Age")
+  end
+  filter do |row|
+    # Notice I'm using "Color", not :color
+    row["Color"] != "blue"
+  end
+}
+{% endhighlight %}
+
+We use +"Color"+ instead of +:color+, because row is a +Ruport::Data::Record+.
+
+h3. Summaries
+
+Do sigma-type operations on your report, for say if you wanted a summary of each roses' petal count distribution.
+
+{% highlight ruby %}
+Rose.make(:count_all_colors) {
+  rows do
+    column(:type => "Type")
+    column(:color => "Color")
+  end
+  summary("Type") do
+    column("Color") { |colors| colors.uniq.join(", ") }
+    column("Count") { |colors| colors.size }
+  end
+}
+{% endhighlight %}
+
+h3. Pivots
+
+For a pivot with row _Color_, column _Type_, and data _Ages_
+
+{% highlight ruby %}
+Rose.make(:pivot_example) {
+  rows do
+    column(:type => "Type")
+    column(:color => "Color")
+    column(:age => "Age")
+  end
+  pivot("Color", "Type") do |rows|
+    # Sum of Ages
+    rows.map(&:Age).map(&:to_i).inject(0) { |sum,x| sum+x }
+  end
+}
+{% endhighlight %}
+
+h2. Advanced Stuff: Import (Update)
+
+Not only can you output data, you can import data too!
+
+h3. Making a Report Ready for Import
+
+{% highlight ruby %}
+Rose.make(:with_find_and_update) do
+  rows do
+    identity(:id => "ID")      # !!!
+    column(:type => "Type")
+    column(:color => "Color")
+    column(:age => "Age")
+  end
+
+  # The bare minimum for an importable report
+  roots do
+    # find is optional. By default will return items with item["ID"] == idy
+    find do |items, idy|
+      items.find { |item| item.id.to_s == idy }
+    end
+    update do |item, updates|
+      item.color = updates["Color"]
+    end
+  end
+end
+{% endhighlight %}
+
+In order to update via import, you *must* specify one column as the +identity+ column. +Rose+ will pass in the correct cell as +idy+ in your +find {}+
+
+h3. Manual Import
+
+Assuming
+
+{% highlight ruby %}
+@flowers = [
+  Flower.new(0, :roses, :red, 1),
+  Flower.new(1, :violets, :blue, 2),
+  Flower.new(2, :roses, :red, 3)
+]
+{% endhighlight %}
+
+Provide hash +:with+, paired +idy+ => +updates+.
+
+{% highlight ruby %}
+Rose(:with_find_and_update).photosynthesize(@flowers, {
+  :with => {
+    "0" => { "Color" => "blue" }
+  }
+})
+{% endhighlight %}
+
++"0"+ will be passed into +find {}+, returning +@flowers.first+. That will then be passed into +update {}+ as +item+, along with +{ "Color" => "blue" }+ as +updates+. The resulting +@flowers+ would be
+
+{% highlight text %}
+[ #<struct Flower id=0, type=:roses, color="blue", age=1>, 
+  #<struct Flower id=1, type=:violets, color=:blue, age=2>, 
+  #<struct Flower id=2, type=:roses, color=:red, age=3>
+]
+{% endhighlight %}
+
+h3. CSV Import
+
+{% highlight ruby %}
+Rose(:with_find_and_update).photosynthesize(@flowers, {
+  :csv_file => "change_flowers.csv"
+})
+{% endhighlight %}
+
+Where +change_flowers.csv+
+
+{% highlight text %}
+ID,Type,Color,Age
+0,roses,blue,1
+1,violets,red,2
+2,roses,green,3
+{% endhighlight %}
+
+Would result in
+
+{% highlight text %}
+[ #<struct Flower id=0, type=:roses, color="blue", age=1>,
+  #<struct Flower id=1, type=:violets, color="red", age=2>,
+  #<struct Flower id=2, type=:roses, color="green", age=3>
+]
+{% endhighlight %}
+
+h3. Preview Import
+
+Sometimes you only want to see changes and not commit them (especially in the case of ActiveRecord)
+
+{% highlight ruby %}
+Rose.make(:with_preview) do
+  rows do
+    identity(:id => "ID")
+    column(:type => "Type")
+    column(:color => "Color")
+    column(:age => "Age")
+  end
+  roots do
+    preview_update do |item, updates|
+      # For example...
+      item.preview(true); item.color = updates["Color"]
+    end
+    update { raise Exception, "you shouldn't be calling me" }
+  end
+end
+
+Rose(:with_preview).photosynthesize(@flowers, {
+  :with => {
+    "0" => { "Color" => "blue" }
+  },
+  :preview => true # This is new
+})
+
+Rose(:with_preview).photosynthesize(@flowers, {
+  :with => "change_flowers.csv",
+  :preview  => true # This is new
+})
+{% endhighlight %}
+
+h2. Advanced Stuff: Import (Create)
+
+What to do when additional information shows up in your import? Create!
+
+{% highlight ruby %}
+Rose.make(:with_preview_create) do
+  rows do
+    identity(:id => "ID")
+    column(:type => "Type")
+    column(:color => "Color")
+    column(:age => "Age")
+  end
+  roots do
+    preview_create { |idy, updates| # Initialize }
+    create { |idy, updates| # Initialize and save }
+    update {}
+  end
+end
+{% endhighlight %}
+
++Rose+ will create when the +find {}+ returns +nil+. And depending on whether or not +:preview+ is true, it will call +preview_create+ or +create+, respectively.
+
+h2. <a name="ar">ActiveRecord</a>
+
+{% highlight bash %}
+config.gem 'rose', :lib => 'rose/active_record'
+{% endhighlight %}
+
+The API is the same for the most part, except:
+
+{% highlight bash %}
+Employee.rose(:department_salaries) { ... }
+# Almost equivalent to 
+#   Rose.make(:department_salaries, :class => Employee)
+
+Employee.rose_for(:department_salaries)
+# Almost equivalent to
+#   Rose(:department_salaries).photosynthesize(Employee.all)
+
+Employee.rose_for(:department_salaries, :conditions => ["salary <> ?", nil])
+# Almost equivalent to
+#   Rose(:department_salaries).photosynthesize(
+#     Employee.find(:all, :conditions => ["salary <> ?", nil])
+#   )
+
+Employee.root_for(:department_salaries, {
+  :with => {
+    "1" => { "Title" => "New Title" }
+  },
+  :preview => true
+})
+# Almost equivalent to
+#   Rose(:department_salaries).photosynthesize(
+#     Employee.find(:all, :conditions => ["salary <> ?", nil]), {
+#     :with => {
+#       "1" => { "Title" => "New Title" }
+#     },
+#     :preview => true
+#   })
+{% endhighlight %}
+
+I say "Almost", because for AR, seedlings are namespaced within the class. If you want direct access, you can use +Employee.seedlings(:department_salaries)+
+
+h2. Notes
+
+Rose obeys order of execution. If you do +summary+ first and then +sort+, you can only sort on the resulting column headers from your +summary+.
+
+To illustrate
+
+{% highlight ruby %}
+Rose.make(:okay) {
+  rows do
+    column("Type", &:type)
+    column(:color => "Color")
+  end
+  sort("Type", :descending)
+  summary("Type") do
+    column("Color") { |colors| colors.join(", ") }
+  end
+}
+{% endhighlight %}
+
+is valid, but
+
+{% highlight ruby %}
+Rose.make(:not_okay) {
+  rows do
+    column("Type", &:type)
+    column(:color => "Color")
+  end
+  summary("Type") do
+    column("Color") { |colors| colors.join(", ") }
+  end
+  sort("Type", :descending)
+}
+{% endhighlight %}
+
+is not.
+
+h2. Dependencies
+
+{% highlight bash %}gem 'ruport', '1.6.3'{% endhighlight %}
+
+h2. Other
+
+Inspired by +Machinist+ and +factory_girl+.
+
+h2. Copyright
+
+Copyright (c) 2010 Henry Hsu. See LICENSE for details.
