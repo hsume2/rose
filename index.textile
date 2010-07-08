@@ -322,7 +322,9 @@ Employee.root_for(:department_salaries, {
 #   })
 {% endhighlight %}
 
-I say "Almost", because for AR, seedlings are namespaced within the class. If you want direct access, you can use +Employee.seedlings(:department_salaries)+
+I say "Almost", because for AR, seedlings are namespaced within the class. If you want direct access, you can use +Employee.seedlings(:department_salaries)+.
+
+Also, for AR, reporting happends within a transaction that is rolled-back on completion to prevent unwanted commits (at least on the +:class+)...
 
 h2. Notes
 

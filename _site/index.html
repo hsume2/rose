@@ -256,7 +256,8 @@ Employee.root_for<span class="o">(</span>:department_salaries, <span class="o">{
 <span class="c">#     :preview =&gt; true</span>
 <span class="c">#   })</span>
 </code></pre>
-</div><p>I say &#8220;Almost&#8221;, because for AR, seedlings are namespaced within the class. If you want direct access, you can use <ins>Employee.seedlings(:department_salaries)</ins></p>
+</div><p>I say &#8220;Almost&#8221;, because for AR, seedlings are namespaced within the class. If you want direct access, you can use <ins>Employee.seedlings(:department_salaries)</ins>.</p>
+<p>Also, for AR, reporting happends within a transaction that is rolled-back on completion to prevent unwanted commits (at least on the <ins>:class</ins>)&#8230;</p>
 <h2>Notes</h2>
 <p>Rose obeys order of execution. If you do <ins>summary</ins> first and then <ins>sort</ins>, you can only sort on the resulting column headers from your <ins>summary</ins>.</p>
 <p>To illustrate</p>
