@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Rose: A slick Ruby DSL for reporting.
+title: "Rose: A slick Ruby DSL for reporting."
 ---
 h1. "Rose":http://github.com/hsume2/rose
 

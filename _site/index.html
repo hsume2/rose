@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <title>hsume2/rose @ GitHub</title>
+  <title>Rose: A slick Ruby DSL for reporting.</title>
   <link href="stylesheets/application.css" media="all" rel="stylesheet" type="text/css"/>
   <link href="stylesheets/highlight.css" media="all" rel="stylesheet" type="text/css"/>
 </head>
@@ -127,7 +127,7 @@
 
   <span class="c1"># The bare minimum for an importable report</span>
   <span class="n">roots</span> <span class="k">do</span>
-    <span class="c1"># find is optional. By default will return items with item[&quot;ID&quot;] == idy</span>
+    <span class="c1"># find is optional. By default will return first item with item[&quot;ID&quot;] == idy</span>
     <span class="n">find</span> <span class="k">do</span> <span class="o">|</span><span class="n">items</span><span class="p">,</span> <span class="n">idy</span><span class="o">|</span>
       <span class="n">items</span><span class="o">.</span><span class="n">find</span> <span class="p">{</span> <span class="o">|</span><span class="n">item</span><span class="o">|</span> <span class="n">item</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">to_s</span> <span class="o">==</span> <span class="n">idy</span> <span class="p">}</span>
     <span class="k">end</span>
@@ -164,7 +164,7 @@
   <span class="ss">:csv_file</span> <span class="o">=&gt;</span> <span class="s2">&quot;change_flowers.csv&quot;</span>
 <span class="p">})</span>
 </code></pre>
-</div><p>Where <ins>change_flowers.csv</ins></p>
+</div><p>Where <ins>change_flowers.csv</ins> is</p>
 <div class="highlight"><pre><code class="text">ID,Type,Color,Age
 0,roses,blue,1
 1,violets,red,2
@@ -257,7 +257,7 @@ Employee.root_for<span class="o">(</span>:department_salaries, <span class="o">{
 <span class="c">#   })</span>
 </code></pre>
 </div><p>I say &#8220;Almost&#8221;, because for AR, seedlings are namespaced within the class. If you want direct access, you can use <ins>Employee.seedlings(:department_salaries)</ins>.</p>
-<p>Also, for AR, reporting happends within a transaction that is rolled-back on completion to prevent unwanted commits (at least on the <ins>:class</ins>)&#8230;</p>
+<p>Also, for AR, reporting happens within a transaction that is rolled-back on completion to prevent unwanted commits (at least on the <ins>:class</ins>)&#8230;</p>
 <h2>Notes</h2>
 <p>Rose obeys order of execution. If you do <ins>summary</ins> first and then <ins>sort</ins>, you can only sort on the resulting column headers from your <ins>summary</ins>.</p>
 <p>To illustrate</p>
